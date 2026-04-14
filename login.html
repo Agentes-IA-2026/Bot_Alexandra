@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduTrace — Acceso</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink:     #0a0f1e;
+  --ink2:    #1e2640;
+  --slate:   #3a4460;
+  --muted:   #7a8299;
+  --line:    rgba(255,255,255,0.08);
+  --accent:  #4f8ef7;
+  --accent2: #00d4aa;
+  --warn:    #f7694f;
+  --surface: rgba(255,255,255,0.04);
+  --glass:   rgba(255,255,255,0.07);
+}
+
+html, body {
+  height: 100%;
+  font-family: 'DM Sans', sans-serif;
+  background: var(--ink);
+  color: #fff;
+  overflow: hidden;
+}
+
+/* ── Fondo animado ── */
+.bg {
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(79,142,247,0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 80% 90%, rgba(0,212,170,0.12) 0%, transparent 55%),
+    radial-gradient(ellipse 40% 40% at 60% 40%, rgba(247,105,79,0.08) 0%, transparent 50%),
+    var(--ink);
+}
+
+.grid-overlay {
+  position: fixed; inset: 0; z-index: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* ── Orbes flotantes ── */
+.orb {
+  position: fixed; border-radius: 50%; filter: blur(80px); z-index: 0; pointer-events: none;
+  animation: drift 12s ease-in-out infinite alternate;
+}
+.orb1 { width: 320px; height: 320px; background: rgba(79,142,247,0.15); top: -80px; left: -80px; animation-delay: 0s; }
+.orb2 { width: 240px; height: 240px; background: rgba(0,212,170,0.12); bottom: -60px; right: 10%; animation-delay: -4s; }
+.orb3 { width: 180px; height: 180px; background: rgba(247,105,79,0.1); top: 40%; right: -40px; animation-delay: -8s; }
+
+@keyframes drift {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(30px, 20px) scale(1.1); }
+}
+
+/* ── Layout ── */
+.layout {
+  position: relative; z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr 480px;
+  height: 100vh;
+}
+
+/* ── Panel izquierdo — marca ── */
+.brand-panel {
+  display: flex; flex-direction: column;
+  justify-content: space-between;
+  padding: 48px 56px;
+  border-right: 1px solid var(--line);
+}
+
+.logo {
+  display: flex; align-items: center; gap: 12px;
+}
+.logo-icon {
+  width: 40px; height: 40px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+.logo-name {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800; font-size: 22px;
+  letter-spacing: -0.5px;
+}
+.logo-name span { color: var(--accent2); }
+
+.brand-hero { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+
+.brand-tag {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--glass);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 12px; color: var(--accent2);
+  letter-spacing: 0.08em; text-transform: uppercase;
+  margin-bottom: 32px; width: fit-content;
+}
+.brand-tag::before {
+  content: ''; width: 6px; height: 6px;
+  background: var(--accent2); border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.8)} }
+
+.brand-title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(36px, 4vw, 54px);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -2px;
+  margin-bottom: 20px;
+}
+.brand-title .hi { color: var(--accent); }
+.brand-title .lo { color: rgba(255,255,255,0.3); }
+
+.brand-sub {
+  font-size: 16px; color: var(--muted);
+  line-height: 1.6; max-width: 400px;
+}
+
+.features {
+  display: flex; flex-direction: column; gap: 12px;
+  margin-top: 40px;
+}
+.feat {
+  display: flex; align-items: center; gap: 12px;
+  font-size: 14px; color: rgba(255,255,255,0.6);
+}
+.feat-dot {
+  width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+}
+.feat-dot.blue  { background: rgba(79,142,247,0.15); }
+.feat-dot.green { background: rgba(0,212,170,0.15); }
+.feat-dot.red   { background: rgba(247,105,79,0.15); }
+
+.brand-footer {
+  font-size: 12px; color: var(--muted);
+}
+.brand-footer strong { color: var(--warn); }
+
+/* ── Panel derecho — login ── */
+.login-panel {
+  display: flex; align-items: center; justify-content: center;
+  padding: 48px 40px;
+  background: var(--surface);
+}
+
+.login-card {
+  width: 100%; max-width: 380px;
+  animation: slideUp 0.6s cubic-bezier(0.16,1,0.3,1) both;
+}
+@keyframes slideUp {
+  from { opacity:0; transform: translateY(24px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+
+.login-header { margin-bottom: 36px; }
+.login-header h2 {
+  font-family: 'Syne', sans-serif;
+  font-size: 28px; font-weight: 700;
+  letter-spacing: -1px;
+  margin-bottom: 8px;
+}
+.login-header p { font-size: 14px; color: var(--muted); }
+
+/* Plan badge */
+.plan-required {
+  background: linear-gradient(135deg, rgba(247,105,79,0.15), rgba(247,105,79,0.05));
+  border: 1px solid rgba(247,105,79,0.3);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 28px;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.plan-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.plan-text { font-size: 13px; line-height: 1.5; }
+.plan-text strong { color: var(--warn); display: block; margin-bottom: 2px; }
+.plan-text span { color: rgba(255,255,255,0.5); }
+
+/* Form */
+.field { margin-bottom: 16px; }
+.field label {
+  display: block;
+  font-size: 12px; font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0.06em; text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.field input {
+  width: 100%;
+  background: var(--glass);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 13px 16px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  color: #fff;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+.field input::placeholder { color: rgba(255,255,255,0.2); }
+.field input:focus {
+  border-color: var(--accent);
+  background: rgba(79,142,247,0.06);
+}
+
+.forgot {
+  text-align: right; margin-top: -8px; margin-bottom: 24px;
+}
+.forgot a {
+  font-size: 12px; color: var(--muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.forgot a:hover { color: var(--accent); }
+
+.btn-login {
+  width: 100%;
+  background: linear-gradient(135deg, var(--accent), #3a7ef5);
+  border: none; border-radius: 10px;
+  padding: 14px;
+  font-family: 'Syne', sans-serif;
+  font-size: 15px; font-weight: 700;
+  color: #fff; cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+  box-shadow: 0 4px 24px rgba(79,142,247,0.3);
+  letter-spacing: 0.03em;
+  position: relative; overflow: hidden;
+}
+.btn-login:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 32px rgba(79,142,247,0.4);
+}
+.btn-login:active { transform: translateY(0); }
+.btn-login.loading { opacity: 0.7; pointer-events: none; }
+
+.divider {
+  display: flex; align-items: center; gap: 12px;
+  margin: 24px 0;
+}
+.divider::before, .divider::after {
+  content: ''; flex: 1; height: 1px;
+  background: var(--line);
+}
+.divider span { font-size: 12px; color: var(--muted); }
+
+.demo-note {
+  background: rgba(0,212,170,0.06);
+  border: 1px solid rgba(0,212,170,0.15);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 12px; color: rgba(255,255,255,0.5);
+  line-height: 1.5;
+  text-align: center;
+}
+.demo-note strong { color: var(--accent2); }
+
+/* Error */
+.error-msg {
+  background: rgba(247,105,79,0.1);
+  border: 1px solid rgba(247,105,79,0.3);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px; color: var(--warn);
+  margin-bottom: 16px;
+  display: none;
+}
+.error-msg.show { display: block; }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .layout { grid-template-columns: 1fr; }
+  .brand-panel { display: none; }
+  .login-panel { padding: 32px 24px; background: transparent; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg"></div>
+<div class="grid-overlay"></div>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
+<div class="layout">
+
+  <!-- Panel izquierdo -->
+  <div class="brand-panel">
+    <div class="logo">
+      <div class="logo-icon">📡</div>
+      <div class="logo-name">Edu<span>Trace</span></div>
+    </div>
+
+    <div class="brand-hero">
+      <div class="brand-tag">Seguimiento académico inteligente</div>
+      <h1 class="brand-title">
+        Verifica.<br>
+        <span class="hi">Analiza.</span><br>
+        <span class="lo">Reporta.</span>
+      </h1>
+      <p class="brand-sub">
+        Plataforma de seguimiento académico que verifica entregas en Google Drive,
+        detecta uso de IA y evalúa automáticamente la rúbrica CAC.
+      </p>
+
+      <div class="features">
+        <div class="feat">
+          <div class="feat-dot blue">📂</div>
+          Verificación automática de nombres de archivo
+        </div>
+        <div class="feat">
+          <div class="feat-dot red">🤖</div>
+          Detección de contenido generado por IA
+        </div>
+        <div class="feat">
+          <div class="feat-dot green">📊</div>
+          Evaluación de rúbrica CAC en tiempo real
+        </div>
+      </div>
+    </div>
+
+    <div class="brand-footer">
+      Desarrollado para colegios privados y del distrito &nbsp;·&nbsp;
+      <strong>Plan activo requerido</strong>
+    </div>
+  </div>
+
+  <!-- Panel derecho — Login -->
+  <div class="login-panel">
+    <div class="login-card">
+
+      <div class="login-header">
+        <div class="logo" style="margin-bottom:28px">
+          <div class="logo-icon" style="width:32px;height:32px;font-size:14px">📡</div>
+          <div class="logo-name" style="font-size:18px">Edu<span>Trace</span></div>
+        </div>
+        <h2>Bienvenido de nuevo</h2>
+        <p>Ingresa tus credenciales para acceder al panel docente</p>
+      </div>
+
+      <div class="plan-required">
+        <div class="plan-icon">🔒</div>
+        <div class="plan-text">
+          <strong>Acceso con plan activo</strong>
+          <span>Esta plataforma requiere una suscripción vigente. Contacta al administrador si no tienes acceso.</span>
+        </div>
+      </div>
+
+      <div class="error-msg" id="errorMsg">
+        Correo o contraseña incorrectos. Verifica tus datos.
+      </div>
+
+      <div class="field">
+        <label>Correo institucional</label>
+        <input type="email" id="email" placeholder="docente@colegio.edu.co" autocomplete="email">
+      </div>
+
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+
+      <div class="forgot">
+        <a href="#">¿Olvidaste tu contraseña?</a>
+      </div>
+
+      <button class="btn-login" id="btnLogin" onclick="handleLogin()">
+        Ingresar al panel
+      </button>
+
+      <div class="divider"><span>información</span></div>
+
+      <div class="demo-note">
+        ¿Eres docente nuevo? Solicita tu acceso a través del<br>
+        <strong>coordinador académico</strong> de tu institución.
+      </div>
+
+      <div style="margin-top:16px;text-align:center">
+        <button onclick="accesoDemo()" style="background:none;border:none;color:#00d4aa;font-size:13px;cursor:pointer;text-decoration:underline;font-family:'DM Sans',sans-serif">
+          Entrar en modo demostración →
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Supabase config — reemplazar con valores reales
+  const SUPABASE_URL = 'TU_SUPABASE_URL';
+  const SUPABASE_ANON_KEY = 'TU_SUPABASE_ANON_KEY';
+
+  async function handleLogin() {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const btn = document.getElementById('btnLogin');
+    const errMsg = document.getElementById('errorMsg');
+
+    if (!email || !password) {
+      errMsg.textContent = 'Por favor completa todos los campos.';
+      errMsg.classList.add('show');
+      return;
+    }
+
+    btn.textContent = 'Verificando...';
+    btn.classList.add('loading');
+    errMsg.classList.remove('show');
+
+    try {
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (data.access_token) {
+        // Guardar sesión
+        localStorage.setItem('et_token', data.access_token);
+        localStorage.setItem('et_user', JSON.stringify(data.user));
+        // Redirigir al dashboard
+        window.location.href = 'dashboard.html';
+      } else {
+        throw new Error('Credenciales inválidas');
+      }
+    } catch (e) {
+      errMsg.textContent = 'Correo o contraseña incorrectos. Verifica tus datos.';
+      errMsg.classList.add('show');
+      btn.textContent = 'Ingresar al panel';
+      btn.classList.remove('loading');
+    }
+  }
+
+  function accesoDemo() {
+    localStorage.setItem('et_token', 'demo');
+    localStorage.setItem('et_user', JSON.stringify({email: 'docente@demo.co'}));
+    window.location.href = 'dashboard.html';
+  }
+
+  // Enter para login
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') handleLogin();
+  });
+
+  // Redirigir si ya hay sesión
+  if (localStorage.getItem('et_token')) {
+    window.location.href = 'dashboard.html';
+  }
+</script>
+</body>
+</html>

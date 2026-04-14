@@ -1,0 +1,1943 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduTrace — Panel Docente</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink:     #0a0f1e;
+  --ink2:    #111827;
+  --surface: #161d2e;
+  --card:    #1a2236;
+  --border:  rgba(255,255,255,0.07);
+  --muted:   #6b7594;
+  --text:    #e8ecf4;
+  --accent:  #4f8ef7;
+  --green:   #00d4aa;
+  --warn:    #f7694f;
+  --yellow:  #f5c842;
+  --purple:  #9b6ef3;
+}
+
+html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(--ink); color: var(--text); }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* ── Sidebar ── */
+.sidebar {
+  position: fixed; left: 0; top: 0; bottom: 0;
+  width: 240px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  z-index: 100;
+}
+
+.sidebar-logo {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.logo-icon {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, var(--accent), var(--green));
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; flex-shrink: 0;
+}
+.logo-name {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800; font-size: 18px; letter-spacing: -0.5px;
+}
+.logo-name span { color: var(--green); }
+
+.sidebar-section {
+  padding: 20px 12px 8px;
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted); font-weight: 500;
+}
+
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px; margin: 2px 8px;
+  font-size: 14px; color: var(--muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  text-decoration: none;
+}
+.nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+.nav-item.active { background: rgba(79,142,247,0.12); color: var(--accent); }
+.nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+
+.nav-badge {
+  margin-left: auto;
+  background: var(--warn);
+  color: #fff; font-size: 10px; font-weight: 700;
+  padding: 2px 6px; border-radius: 10px;
+  min-width: 18px; text-align: center;
+}
+
+.sidebar-bottom {
+  margin-top: auto;
+  padding: 16px 8px;
+  border-top: 1px solid var(--border);
+}
+
+.user-chip {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.user-chip:hover { background: rgba(255,255,255,0.05); }
+.user-avatar {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--purple), var(--accent));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: #fff;
+  flex-shrink: 0;
+}
+.user-info { flex: 1; min-width: 0; }
+.user-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-role { font-size: 11px; color: var(--muted); }
+
+/* ── Main ── */
+.main {
+  margin-left: 240px;
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+}
+
+/* ── Topbar ── */
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(10,15,30,0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.topbar-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 16px; font-weight: 700;
+}
+.topbar-actions { display: flex; align-items: center; gap: 10px; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer; border: none;
+  transition: all 0.15s;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 12px rgba(79,142,247,0.25);
+}
+.btn-primary:hover { background: #3a7ef5; transform: translateY(-1px); }
+.btn-ghost {
+  background: var(--surface);
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+
+/* ── Content ── */
+.content { padding: 32px; flex: 1; }
+
+/* ── Stat cards ── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  position: relative; overflow: hidden;
+  transition: transform 0.15s, border-color 0.15s;
+}
+.stat-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.12); }
+.stat-card::before {
+  content: ''; position: absolute;
+  top: 0; left: 0; right: 0; height: 2px;
+}
+.stat-card.blue::before  { background: linear-gradient(90deg, var(--accent), transparent); }
+.stat-card.green::before { background: linear-gradient(90deg, var(--green), transparent); }
+.stat-card.warn::before  { background: linear-gradient(90deg, var(--warn), transparent); }
+.stat-card.yellow::before{ background: linear-gradient(90deg, var(--yellow), transparent); }
+.stat-card.purple::before{ background: linear-gradient(90deg, var(--purple), transparent); }
+
+.stat-icon {
+  width: 36px; height: 36px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; margin-bottom: 14px;
+}
+.stat-icon.blue   { background: rgba(79,142,247,0.12); }
+.stat-icon.green  { background: rgba(0,212,170,0.12); }
+.stat-icon.warn   { background: rgba(247,105,79,0.12); }
+.stat-icon.yellow { background: rgba(245,200,66,0.12); }
+.stat-icon.purple { background: rgba(155,110,243,0.12); }
+
+.stat-value {
+  font-family: 'Syne', sans-serif;
+  font-size: 32px; font-weight: 800;
+  letter-spacing: -1px; line-height: 1;
+  margin-bottom: 4px;
+}
+.stat-label { font-size: 12px; color: var(--muted); }
+
+/* ── Sección de título ── */
+.section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.section-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 15px; font-weight: 700;
+}
+.section-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+/* ── Tabla de entregas ── */
+.table-wrap {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.table-toolbar {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+}
+
+.search-input {
+  flex: 1; max-width: 280px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.search-input::placeholder { color: var(--muted); }
+.search-input:focus { border-color: var(--accent); }
+
+.filter-select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text);
+  outline: none; cursor: pointer;
+}
+
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--muted); font-weight: 500;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+}
+tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.12s;
+  cursor: pointer;
+}
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: rgba(255,255,255,0.025); }
+tbody td { padding: 14px 16px; font-size: 13px; vertical-align: middle; }
+
+.student-name { font-weight: 500; color: var(--text); }
+.student-email { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* Badges de estado */
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 500; white-space: nowrap;
+}
+.badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; }
+.badge-entregado   { background: rgba(0,212,170,0.12); color: var(--green); }
+.badge-entregado::before   { background: var(--green); }
+.badge-pendiente   { background: rgba(245,200,66,0.12); color: var(--yellow); }
+.badge-pendiente::before   { background: var(--yellow); }
+.badge-tarde       { background: rgba(155,110,243,0.12); color: var(--purple); }
+.badge-tarde::before       { background: var(--purple); }
+.badge-incorrecto  { background: rgba(247,105,79,0.12); color: var(--warn); }
+.badge-incorrecto::before  { background: var(--warn); }
+
+.ia-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: 6px;
+  font-size: 11px;
+}
+.ia-alto   { background: rgba(247,105,79,0.15); color: var(--warn); }
+.ia-medio  { background: rgba(245,200,66,0.12); color: var(--yellow); }
+.ia-bajo   { background: rgba(0,212,170,0.08); color: var(--green); }
+.ia-nd     { color: var(--muted); }
+
+.criterio-pill {
+  display: inline-block;
+  padding: 2px 8px; border-radius: 4px;
+  font-size: 11px; font-weight: 500;
+}
+.c-bajo     { background: rgba(247,105,79,0.12); color: var(--warn); }
+.c-basico   { background: rgba(245,200,66,0.12); color: var(--yellow); }
+.c-alto     { background: rgba(79,142,247,0.12); color: var(--accent); }
+.c-superior { background: rgba(0,212,170,0.12); color: var(--green); }
+
+.btn-ver {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 12px; color: var(--muted);
+  cursor: pointer; transition: all 0.15s;
+}
+.btn-ver:hover { color: var(--accent); border-color: var(--accent); }
+
+/* ── Modal reporte ── */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s;
+}
+.modal-overlay.show { opacity: 1; pointer-events: all; }
+
+.modal {
+  background: var(--card);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  width: 100%; max-width: 680px;
+  max-height: 85vh;
+  overflow-y: auto;
+  transform: translateY(16px);
+  transition: transform 0.25s cubic-bezier(0.16,1,0.3,1);
+}
+.modal-overlay.show .modal { transform: translateY(0); }
+
+.modal-header {
+  padding: 24px 24px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+}
+.modal-title { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; }
+.modal-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.modal-close {
+  background: var(--surface); border: none;
+  width: 30px; height: 30px; border-radius: 6px;
+  color: var(--muted); font-size: 16px; cursor: pointer;
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+}
+.modal-close:hover { color: var(--text); }
+
+.modal-body { padding: 24px; }
+
+.report-section { margin-bottom: 24px; }
+.report-section-title {
+  font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 12px; font-weight: 500;
+}
+
+.ia-alert {
+  border-radius: 10px; padding: 16px;
+  display: flex; gap: 12px; align-items: flex-start;
+  margin-bottom: 16px;
+}
+.ia-alert.alto   { background: rgba(247,105,79,0.08); border: 1px solid rgba(247,105,79,0.2); }
+.ia-alert.bajo   { background: rgba(0,212,170,0.06); border: 1px solid rgba(0,212,170,0.15); }
+.ia-alert-icon { font-size: 20px; }
+.ia-alert-body { flex: 1; }
+.ia-alert-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+.ia-alert-sub { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+.criteria-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.criterio-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px 14px;
+}
+.criterio-name { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.criterio-val { font-size: 13px; font-weight: 500; }
+.criterio-just { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+
+.struct-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+}
+.struct-item {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 12px;
+  font-size: 12px;
+}
+.struct-check { font-size: 14px; }
+
+.resumen-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px;
+  font-size: 14px; line-height: 1.7; color: rgba(255,255,255,0.75);
+}
+
+.recom-box {
+  background: rgba(79,142,247,0.05);
+  border: 1px solid rgba(79,142,247,0.15);
+  border-radius: 10px; padding: 16px;
+  font-size: 14px; line-height: 1.7; color: rgba(255,255,255,0.7);
+}
+
+/* ── Loading spinner ── */
+.spinner {
+  display: inline-block; width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,0.15);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Empty state ── */
+.empty {
+  text-align: center; padding: 48px 24px;
+  color: var(--muted);
+}
+.empty-icon { font-size: 36px; margin-bottom: 12px; }
+.empty-title { font-size: 16px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+.empty-sub { font-size: 13px; }
+
+/* ── Selector de tarea ── */
+.task-selector {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px; padding: 20px;
+  margin-bottom: 24px;
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+.task-selector label { font-size: 13px; color: var(--muted); white-space: nowrap; }
+.task-select {
+  flex: 1; min-width: 200px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px; color: var(--text);
+  outline: none; cursor: pointer;
+}
+
+/* ── Módulos generales ──────────────────────────────────── */
+.mod-header {
+  display:flex; align-items:flex-start; justify-content:space-between;
+  gap:16px; margin-bottom:24px; flex-wrap:wrap;
+}
+.mod-title {
+  font-family:'Syne',sans-serif; font-size:22px;
+  font-weight:800; letter-spacing:-0.5px;
+}
+.mod-sub { font-size:13px; color:var(--muted); margin-top:4px; }
+
+.mod-form-wrap {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:14px; padding:24px; margin-bottom:24px;
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+.mod-form-title {
+  font-family:'Syne',sans-serif; font-size:15px; font-weight:700;
+  margin-bottom:18px; color:var(--text);
+}
+.mod-form-grid {
+  display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px;
+}
+.mod-field { display:flex; flex-direction:column; gap:6px; }
+.mod-field-full { grid-column:1/-1; }
+.mod-field label {
+  font-size:11px; font-weight:500; text-transform:uppercase;
+  letter-spacing:0.07em; color:var(--muted);
+}
+.mod-field input, .mod-field select {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:8px; padding:10px 14px;
+  font-family:'DM Sans',sans-serif; font-size:14px;
+  color:var(--text); outline:none;
+  transition:border-color 0.2s;
+}
+.mod-field input:focus, .mod-field select:focus { border-color:var(--accent); }
+.mod-field input::placeholder { color:var(--muted); }
+.mod-field input[type="file"] { padding:8px 12px; cursor:pointer; }
+.mod-hint { font-size:11px; color:var(--muted); }
+.mod-form-actions { display:flex; gap:10px; justify-content:flex-end; }
+.mod-msg {
+  margin-top:12px; font-size:13px; padding:10px 14px;
+  border-radius:8px; display:none;
+}
+.mod-msg.ok  { display:block; background:rgba(0,212,170,0.1); color:var(--green); border:1px solid rgba(0,212,170,0.2); }
+.mod-msg.err { display:block; background:rgba(247,105,79,0.1); color:var(--warn); border:1px solid rgba(247,105,79,0.2); }
+
+.mod-filter-bar {
+  display:flex; align-items:center; gap:12px;
+  margin-bottom:16px; flex-wrap:wrap; font-size:13px; color:var(--muted);
+}
+.mod-filter-bar select {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:8px; padding:8px 14px;
+  font-family:'DM Sans',sans-serif; font-size:13px;
+  color:var(--text); outline:none; min-width:220px;
+}
+
+/* Cards de cursos */
+.mod-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; }
+.curso-card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:12px; padding:18px;
+  transition:border-color 0.15s, transform 0.15s;
+  position:relative; overflow:hidden;
+}
+.curso-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg,var(--accent),var(--green));
+}
+.curso-card:hover { border-color:rgba(255,255,255,0.15); transform:translateY(-2px); }
+.curso-card-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; }
+.curso-badge {
+  background:rgba(79,142,247,0.12); color:var(--accent);
+  border-radius:6px; padding:4px 10px; font-size:12px; font-weight:600;
+}
+.curso-card-nombre { font-family:'Syne',sans-serif; font-size:15px; font-weight:700; margin-bottom:4px; }
+.curso-card-inst { font-size:12px; color:var(--muted); margin-bottom:12px; }
+.curso-card-meta { display:flex; gap:8px; flex-wrap:wrap; }
+.curso-meta-tag {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:6px; padding:3px 9px; font-size:11px; color:var(--muted);
+}
+.curso-card-actions { display:flex; gap:8px; margin-top:14px; padding-top:12px; border-top:1px solid var(--border); }
+
+/* Tabla estudiantes */
+.mod-table-wrap {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:14px; overflow:hidden;
+}
+.mod-preview-title {
+  font-size:13px; font-weight:500; color:var(--muted);
+  padding:12px 16px; border-bottom:1px solid var(--border);
+  background:rgba(255,255,255,0.02);
+}
+.mod-table { width:100%; border-collapse:collapse; table-layout:fixed; }
+.mod-table thead th {
+  padding:10px 14px; text-align:left;
+  font-size:11px; text-transform:uppercase; letter-spacing:0.07em;
+  color:var(--muted); font-weight:500;
+  border-bottom:1px solid var(--border);
+  background:rgba(255,255,255,0.02);
+}
+.mod-table tbody tr { border-bottom:1px solid var(--border); transition:background 0.1s; }
+.mod-table tbody tr:last-child { border-bottom:none; }
+.mod-table tbody tr:hover { background:rgba(255,255,255,0.025); }
+.mod-table tbody td { padding:11px 14px; font-size:13px; }
+.est-nombre { font-weight:500; }
+.est-correo { font-size:11px; color:var(--muted); margin-top:2px; }
+
+/* Cards de tareas */
+.tarea-card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:12px; padding:18px; margin-bottom:12px;
+  display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+  transition:border-color 0.15s;
+}
+.tarea-card:hover { border-color:rgba(255,255,255,0.12); }
+.tarea-icon {
+  width:40px; height:40px; border-radius:10px; flex-shrink:0;
+  background:rgba(79,142,247,0.12);
+  display:flex; align-items:center; justify-content:center; font-size:18px;
+}
+.tarea-info { flex:1; min-width:0; }
+.tarea-titulo { font-weight:600; font-size:14px; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tarea-meta { font-size:12px; color:var(--muted); display:flex; gap:12px; flex-wrap:wrap; }
+.tarea-actions { display:flex; gap:8px; flex-shrink:0; }
+.tarea-fecha-tag {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:3px 10px; border-radius:20px; font-size:11px;
+}
+.tarea-fecha-ok   { background:rgba(0,212,170,0.1); color:var(--green); }
+.tarea-fecha-warn { background:rgba(247,105,79,0.1); color:var(--warn); }
+
+.roi-hero {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 28px 32px;
+  margin-bottom: 20px;
+  display: flex; align-items: flex-start;
+  justify-content: space-between; gap: 24px; flex-wrap: wrap;
+}
+.roi-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(0,212,170,0.1); color: var(--green);
+  border-radius: 20px; padding: 4px 12px;
+  font-size: 11px; font-weight: 500;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.roi-tag-dot { width:6px;height:6px;border-radius:50%;background:var(--green); }
+.roi-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 26px; font-weight: 800;
+  letter-spacing: -0.5px; line-height: 1.2; margin-bottom: 10px;
+}
+.roi-sub { font-size: 14px; color: var(--muted); line-height: 1.6; max-width: 480px; }
+.roi-hero-badge {
+  background: rgba(247,105,79,0.1);
+  border: 1px solid rgba(247,105,79,0.25);
+  border-radius: 12px; padding: 20px 24px;
+  text-align: center; min-width: 150px; flex-shrink: 0;
+}
+.roi-hero-num {
+  font-family: 'Syne', sans-serif;
+  font-size: 42px; font-weight: 800;
+  line-height: 1; color: var(--warn); margin-bottom: 4px;
+}
+.roi-hero-label { font-size: 12px; color: var(--muted); line-height: 1.4; }
+
+.roi-presets { display:flex; align-items:center; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
+.roi-presets label { font-size:13px; color:var(--muted); white-space:nowrap; }
+.roi-preset-btns { display:flex; gap:6px; flex-wrap:wrap; }
+.roi-btn {
+  padding: 7px 16px; border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 12px; font-weight: 500; cursor: pointer;
+  transition: all 0.15s; color: var(--muted);
+  font-family: 'DM Sans', sans-serif;
+}
+.roi-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+.roi-btn.active {
+  background: rgba(79,142,247,0.12);
+  color: var(--accent); border-color: rgba(79,142,247,0.4);
+}
+
+.roi-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px; margin-bottom:20px; }
+.roi-stat {
+  background: var(--card); border:1px solid var(--border);
+  border-radius:12px; padding:16px; text-align:center;
+}
+.roi-stat-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:8px; font-weight:500; }
+.roi-stat-val {
+  font-family:'Syne',sans-serif; font-size:26px; font-weight:800;
+  letter-spacing:-0.5px; line-height:1;
+}
+.roi-stat-val.danger { color:var(--warn); }
+.roi-stat-val.success { color:var(--green); }
+.roi-stat-val.info { color:var(--accent); }
+.roi-stat-val.yellow { color:var(--yellow); }
+.roi-stat-sub { font-size:11px; color:var(--muted); margin-top:4px; }
+
+.roi-compare { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px; }
+.roi-col {
+  border-radius:12px; padding:20px;
+  border:1px solid var(--border);
+}
+.roi-col.manual { background:rgba(247,105,79,0.06); border-color:rgba(247,105,79,0.2); }
+.roi-col.auto   { background:rgba(0,212,170,0.05);  border-color:rgba(0,212,170,0.18); }
+.roi-col-title {
+  font-size:11px; font-weight:500; text-transform:uppercase;
+  letter-spacing:0.08em; margin-bottom:14px;
+}
+.roi-col.manual .roi-col-title { color:var(--warn); }
+.roi-col.auto   .roi-col-title { color:var(--green); }
+.roi-row {
+  display:flex; justify-content:space-between; align-items:baseline;
+  padding:7px 0; border-bottom:1px solid var(--border); font-size:13px;
+}
+.roi-row:last-child { border-bottom:none; padding-bottom:0; }
+.roi-row-label { color:var(--muted); }
+.roi-row-val { font-weight:500; }
+.roi-col.manual .roi-row-val { color:var(--warn); }
+.roi-col.auto   .roi-row-val { color:var(--green); }
+
+.roi-table-wrap {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:14px; overflow:hidden; margin-bottom:20px;
+}
+.roi-table-head {
+  padding:14px 20px; border-bottom:1px solid var(--border);
+  font-size:13px; font-weight:500; color:var(--muted);
+  background:rgba(255,255,255,0.02);
+}
+.roi-table { width:100%; border-collapse:collapse; table-layout:fixed; }
+.roi-table thead th {
+  padding:10px 16px; text-align:left;
+  font-size:11px; text-transform:uppercase; letter-spacing:0.07em;
+  color:var(--muted); font-weight:500;
+  border-bottom:1px solid var(--border);
+  background:rgba(255,255,255,0.02);
+}
+.roi-table tbody tr { border-bottom:1px solid var(--border); transition:background 0.1s; }
+.roi-table tbody tr:last-child { border-bottom:none; }
+.roi-table tbody tr.roi-hl { background:rgba(79,142,247,0.07); }
+.roi-table tbody td { padding:12px 16px; font-size:13px; }
+.td-r { text-align:right; }
+.td-c { text-align:center; }
+.saving-pill {
+  display:inline-block; padding:3px 10px; border-radius:20px;
+  font-size:11px; font-weight:500;
+  background:rgba(0,212,170,0.12); color:var(--green);
+}
+
+.roi-chart-wrap {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:14px; padding:22px; margin-bottom:20px;
+}
+.roi-chart-title { font-size:13px; font-weight:500; color:var(--muted); margin-bottom:6px; }
+.roi-legend { display:flex; gap:16px; margin-bottom:14px; font-size:12px; color:var(--muted); }
+.roi-leg-item { display:flex; align-items:center; gap:5px; }
+.roi-leg-dot { width:10px; height:10px; border-radius:2px; flex-shrink:0; }
+
+.roi-closing {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:14px; padding:24px;
+}
+.roi-closing-title {
+  font-family:'Syne',sans-serif; font-size:17px; font-weight:700;
+  margin-bottom:16px; color:var(--text);
+}
+.roi-closing-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
+.roi-closing-item {
+  display:flex; align-items:flex-start; gap:10px;
+  font-size:13px; color:var(--muted); line-height:1.6;
+  background:rgba(255,255,255,0.03); border:1px solid var(--border);
+  border-radius:10px; padding:14px;
+}
+.roi-closing-icon { font-size:18px; flex-shrink:0; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">📡</div>
+    <div class="logo-name">Edu<span>Trace</span></div>
+  </div>
+
+  <div class="sidebar-section">Principal</div>
+  <a class="nav-item active" onclick="showView('dashboard')">
+    <span class="icon">📊</span> Dashboard
+  </a>
+  <a class="nav-item" onclick="showView('entregas')">
+    <span class="icon">📂</span> Entregas
+    <span class="nav-badge" id="badgeEntregas">—</span>
+  </a>
+
+  <div class="sidebar-section">Gestión</div>
+  <a class="nav-item" onclick="showView('estudiantes')">
+    <span class="icon">👥</span> Estudiantes
+  </a>
+  <a class="nav-item" onclick="showView('tareas')">
+    <span class="icon">📋</span> Tareas
+  </a>
+  <a class="nav-item" onclick="showView('cursos')">
+    <span class="icon">🏫</span> Cursos
+  </a>
+
+  <div class="sidebar-section">Sistema</div>
+  <a class="nav-item" onclick="showView('roi')">
+    <span class="icon">💡</span> ¿Por qué EduTrace?
+  </a>
+  <a class="nav-item" onclick="showView('configuracion')">
+    <span class="icon">⚙️</span> Configuración
+  </a>
+
+  <div class="sidebar-bottom">
+    <div class="user-chip">
+      <div class="user-avatar" id="userAvatar">D</div>
+      <div class="user-info">
+        <div class="user-name" id="userName">Docente</div>
+        <div class="user-role">Docente</div>
+      </div>
+    </div>
+    <a class="nav-item" onclick="logout()" style="margin-top:4px">
+      <span class="icon">🚪</span> Cerrar sesión
+    </a>
+  </div>
+</aside>
+
+<!-- Main -->
+<div class="main">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-title" id="topbarTitle">Dashboard</div>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost" onclick="escanearAhora()">
+        🔍 Escanear ahora
+      </button>
+      <button class="btn btn-primary" onclick="showView('tareas')">
+        + Nueva tarea
+      </button>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="content" id="mainContent">
+
+    <!-- Vista: Dashboard -->
+    <div id="view-dashboard">
+
+      <!-- Stats -->
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card blue">
+          <div class="stat-icon blue">📂</div>
+          <div class="stat-value" id="statTotal">—</div>
+          <div class="stat-label">Total estudiantes</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon green">✅</div>
+          <div class="stat-value" id="statEntregados">—</div>
+          <div class="stat-label">Entregaron</div>
+        </div>
+        <div class="stat-card yellow">
+          <div class="stat-icon yellow">⏳</div>
+          <div class="stat-value" id="statPendientes">—</div>
+          <div class="stat-label">Pendientes</div>
+        </div>
+        <div class="stat-card warn">
+          <div class="stat-icon warn">🤖</div>
+          <div class="stat-value" id="statIA">—</div>
+          <div class="stat-label">Posible uso de IA</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-icon purple">⚠️</div>
+          <div class="stat-value" id="statNombre">—</div>
+          <div class="stat-label">Nombre incorrecto</div>
+        </div>
+      </div>
+
+      <!-- Selector de tarea -->
+      <div class="task-selector">
+        <label>Ver entregas de:</label>
+        <select class="task-select" id="tareaSelect" onchange="cargarEntregas()">
+          <option value="">— Selecciona una tarea —</option>
+        </select>
+        <button class="btn btn-ghost" onclick="cargarTareas()">↻ Actualizar</button>
+      </div>
+
+      <!-- Tabla -->
+      <div class="table-wrap">
+        <div class="table-toolbar">
+          <input class="search-input" type="text" placeholder="🔍  Buscar estudiante..." oninput="filtrarTabla(this.value)">
+          <select class="filter-select" onchange="filtrarEstado(this.value)">
+            <option value="">Todos los estados</option>
+            <option value="entregado">Entregado</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="entregado_tarde">Tarde</option>
+            <option value="nombre_incorrecto">Nombre incorrecto</option>
+          </select>
+        </div>
+        <div id="tablaContainer">
+          <div class="empty">
+            <div class="empty-icon">📋</div>
+            <div class="empty-title">Selecciona una tarea</div>
+            <div class="empty-sub">Elige una tarea del selector para ver las entregas</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /view-dashboard -->
+
+    <!-- Otras vistas (placeholder) -->
+    <div id="view-entregas" style="display:none">
+      <div class="empty"><div class="empty-icon">📂</div><div class="empty-title">Módulo Entregas</div><div class="empty-sub">Próximamente</div></div>
+    </div>
+    <!-- ══ MÓDULO CURSOS ══ -->
+    <div id="view-cursos" style="display:none">
+      <div class="mod-header">
+        <div>
+          <div class="mod-title">Cursos</div>
+          <div class="mod-sub">Registra los grupos del colegio y vincula su carpeta en Google Drive</div>
+        </div>
+        <button class="btn btn-primary" onclick="mostrarFormCurso()">+ Nuevo curso</button>
+      </div>
+
+      <!-- Formulario nuevo curso -->
+      <div class="mod-form-wrap" id="formCursoWrap" style="display:none">
+        <div class="mod-form-title">Registrar nuevo curso</div>
+        <div class="mod-form-grid">
+          <div class="mod-field">
+            <label>Institución</label>
+            <input type="text" id="cInst" placeholder="Ej: Colegio Australiano Campestre">
+          </div>
+          <div class="mod-field">
+            <label>Grado</label>
+            <select id="cGrado">
+              <option value="">Selecciona</option>
+              <option>6</option><option>7</option><option>8</option>
+              <option>9</option><option>10</option><option>11</option>
+            </select>
+          </div>
+          <div class="mod-field">
+            <label>Grupo</label>
+            <input type="text" id="cGrupo" placeholder="Ej: A, B, C">
+          </div>
+          <div class="mod-field">
+            <label>Materia</label>
+            <input type="text" id="cMateria" placeholder="Ej: Lenguaje y Comunicación">
+          </div>
+          <div class="mod-field mod-field-full">
+            <label>Link carpeta Drive del grado</label>
+            <input type="text" id="cDriveUrl" placeholder="https://drive.google.com/drive/folders/...">
+            <span class="mod-hint">Pega el link de la carpeta que contiene las subcarpetas de cada ensayo</span>
+          </div>
+        </div>
+        <div class="mod-form-actions">
+          <button class="btn btn-ghost" onclick="ocultarFormCurso()">Cancelar</button>
+          <button class="btn btn-primary" onclick="guardarCurso()">Guardar curso</button>
+        </div>
+        <div class="mod-msg" id="msgCurso"></div>
+      </div>
+
+      <!-- Lista de cursos -->
+      <div id="listaCursos">
+        <div class="mod-cards" id="cardsCursos">
+          <div class="empty"><div class="empty-icon">🏫</div><div class="empty-title">Sin cursos registrados</div><div class="empty-sub">Crea tu primer curso con el botón de arriba</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ MÓDULO ESTUDIANTES ══ -->
+    <div id="view-estudiantes" style="display:none">
+      <div class="mod-header">
+        <div>
+          <div class="mod-title">Estudiantes</div>
+          <div class="mod-sub">Importa el listado desde el Excel en Google Drive</div>
+        </div>
+        <button class="btn btn-primary" onclick="mostrarFormEstudiante()">+ Importar listado</button>
+      </div>
+
+      <!-- Formulario importar -->
+      <div class="mod-form-wrap" id="formEstudianteWrap" style="display:none">
+        <div class="mod-form-title">Importar estudiantes desde Excel</div>
+        <div class="mod-form-grid">
+          <div class="mod-field">
+            <label>Curso</label>
+            <select id="eCurso">
+              <option value="">— Selecciona un curso —</option>
+            </select>
+          </div>
+          <div class="mod-field mod-field-full">
+            <label>Link del archivo Excel en Drive</label>
+            <input type="text" id="eDriveUrl" placeholder="https://drive.google.com/file/d/... o link de carpeta LISTADOS">
+            <span class="mod-hint">Ejemplo: link del archivo 10a.xlsx en la carpeta LISTADOS de Drive</span>
+          </div>
+          <div class="mod-field mod-field-full">
+            <label>O carga el archivo Excel directamente</label>
+            <input type="file" id="eArchivo" accept=".xlsx,.xls" onchange="previsualizarExcel(this)">
+          </div>
+        </div>
+
+        <!-- Preview tabla -->
+        <div id="previewEstudiantes" style="display:none">
+          <div class="mod-preview-title">Vista previa — <span id="previewCount">0</span> estudiantes detectados</div>
+          <div class="mod-table-wrap">
+            <table class="mod-table" id="tablaPreview"></table>
+          </div>
+        </div>
+
+        <div class="mod-form-actions">
+          <button class="btn btn-ghost" onclick="ocultarFormEstudiante()">Cancelar</button>
+          <button class="btn btn-primary" id="btnImportar" onclick="importarEstudiantes()" style="display:none">Importar estudiantes</button>
+        </div>
+        <div class="mod-msg" id="msgEstudiante"></div>
+      </div>
+
+      <!-- Selector de curso para ver lista -->
+      <div class="mod-filter-bar">
+        <label>Ver estudiantes de:</label>
+        <select id="filtroCursoEst" onchange="cargarEstudiantesCurso(this.value)">
+          <option value="">— Selecciona un curso —</option>
+        </select>
+      </div>
+
+      <!-- Tabla estudiantes -->
+      <div class="mod-table-wrap" id="wrapTablaEst">
+        <div class="empty"><div class="empty-icon">👥</div><div class="empty-title">Selecciona un curso</div><div class="empty-sub">Elige un curso para ver su listado de estudiantes</div></div>
+      </div>
+    </div>
+
+    <!-- ══ MÓDULO TAREAS ══ -->
+    <div id="view-tareas" style="display:none">
+      <div class="mod-header">
+        <div>
+          <div class="mod-title">Tareas</div>
+          <div class="mod-sub">Registra los ensayos y vincula cada carpeta Drive con el grupo</div>
+        </div>
+        <button class="btn btn-primary" onclick="mostrarFormTarea()">+ Nueva tarea</button>
+      </div>
+
+      <!-- Formulario nueva tarea -->
+      <div class="mod-form-wrap" id="formTareaWrap" style="display:none">
+        <div class="mod-form-title">Registrar nueva tarea</div>
+        <div class="mod-form-grid">
+          <div class="mod-field">
+            <label>Curso</label>
+            <select id="tCurso">
+              <option value="">— Selecciona un curso —</option>
+            </select>
+          </div>
+          <div class="mod-field">
+            <label>Tipo de tarea</label>
+            <select id="tTipo">
+              <option value="ensayo">Ensayo argumentativo</option>
+              <option value="investigacion">Investigación</option>
+              <option value="trabajo_escrito">Trabajo escrito</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+          <div class="mod-field mod-field-full">
+            <label>Título del ensayo / tarea</label>
+            <input type="text" id="tTitulo" placeholder="Ej: El lenguaje como instrumento de poder en la política colombiana">
+          </div>
+          <div class="mod-field">
+            <label>Fecha de entrega</label>
+            <input type="date" id="tFecha">
+          </div>
+          <div class="mod-field">
+            <label>Patrón de nombre del archivo</label>
+            <input type="text" id="tPatron" placeholder="Ensayo [TÍTULO].docx" value="Ensayo ">
+            <span class="mod-hint">Convención de nombre que deben usar los estudiantes</span>
+          </div>
+          <div class="mod-field mod-field-full">
+            <label>Link carpeta Drive de esta tarea</label>
+            <input type="text" id="tDriveUrl" placeholder="https://drive.google.com/drive/folders/...">
+            <span class="mod-hint">Carpeta específica donde los estudiantes suben los archivos de ESTE ensayo</span>
+          </div>
+        </div>
+        <div class="mod-form-actions">
+          <button class="btn btn-ghost" onclick="ocultarFormTarea()">Cancelar</button>
+          <button class="btn btn-primary" onclick="guardarTarea()">Guardar tarea</button>
+        </div>
+        <div class="mod-msg" id="msgTarea"></div>
+      </div>
+
+      <!-- Lista de tareas -->
+      <div class="mod-filter-bar">
+        <label>Filtrar por curso:</label>
+        <select id="filtroCursoTarea" onchange="cargarTareasCurso(this.value)">
+          <option value="">Todos los cursos</option>
+        </select>
+      </div>
+
+      <div id="listaTareas">
+        <div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Sin tareas registradas</div><div class="empty-sub">Crea la primera tarea con el botón de arriba</div></div>
+      </div>
+    </div>
+    <div id="view-configuracion" style="display:none">
+      <div class="empty"><div class="empty-icon">⚙️</div><div class="empty-title">Configuración</div><div class="empty-sub">Próximamente</div></div>
+    </div>
+
+    <!-- Vista: ¿Por qué EduTrace? — Calculadora ROI -->
+    <div id="view-roi" style="display:none">
+
+      <div class="roi-hero">
+        <div>
+          <div class="roi-tag"><div class="roi-tag-dot"></div>Propuesta de valor</div>
+          <div class="roi-title">Cada ensayo que revisas<br>manualmente cuesta tiempo real.</div>
+          <div class="roi-sub">Con 40 minutos por estudiante, revisar un grupo completo se convierte en días de trabajo perdido. EduTrace lo hace en minutos, con criterio uniforme y sin fatiga.</div>
+        </div>
+        <div class="roi-hero-badge">
+          <div class="roi-hero-num" id="roiHeroHoras">100</div>
+          <div class="roi-hero-label">horas perdidas<br>por grupo</div>
+        </div>
+      </div>
+
+      <div class="roi-presets">
+        <label>Tamaño del grupo:</label>
+        <div class="roi-preset-btns">
+          <button class="roi-btn active" onclick="roiSet(150,this)">150 est.</button>
+          <button class="roi-btn" onclick="roiSet(250,this)">250 est.</button>
+          <button class="roi-btn" onclick="roiSet(350,this)">350 est.</button>
+          <button class="roi-btn" onclick="roiSet(450,this)">450 est.</button>
+          <button class="roi-btn" onclick="roiSet(600,this)">600 est.</button>
+        </div>
+      </div>
+
+      <div class="roi-stats">
+        <div class="roi-stat">
+          <div class="roi-stat-label">Estudiantes</div>
+          <div class="roi-stat-val info" id="roiEstudiantes">150</div>
+          <div class="roi-stat-sub">en el grupo</div>
+        </div>
+        <div class="roi-stat">
+          <div class="roi-stat-label">Tiempo manual total</div>
+          <div class="roi-stat-val danger" id="roiHorasM">100h</div>
+          <div class="roi-stat-sub">horas de revisión</div>
+        </div>
+        <div class="roi-stat">
+          <div class="roi-stat-label">Días laborales</div>
+          <div class="roi-stat-val yellow" id="roiDias">12.5</div>
+          <div class="roi-stat-sub">jornadas de 8 horas</div>
+        </div>
+        <div class="roi-stat">
+          <div class="roi-stat-label">Con EduTrace</div>
+          <div class="roi-stat-val success" id="roiHorasA">5h</div>
+          <div class="roi-stat-sub">tiempo total</div>
+        </div>
+        <div class="roi-stat">
+          <div class="roi-stat-label">Tiempo ahorrado</div>
+          <div class="roi-stat-val success" id="roiAhorro">95h</div>
+          <div class="roi-stat-sub">horas devueltas</div>
+        </div>
+      </div>
+
+      <div class="roi-compare">
+        <div class="roi-col manual">
+          <div class="roi-col-title">Sin EduTrace — revisión manual</div>
+          <div class="roi-row"><span class="roi-row-label">Minutos por ensayo</span><span class="roi-row-val">40 min</span></div>
+          <div class="roi-row"><span class="roi-row-label">Total horas</span><span class="roi-row-val" id="rcHorasM">—</span></div>
+          <div class="roi-row"><span class="roi-row-label">Días laborales</span><span class="roi-row-val" id="rcDiasM">—</span></div>
+          <div class="roi-row"><span class="roi-row-label">Costo hora docente</span><span class="roi-row-val">$25.000 COP</span></div>
+          <div class="roi-row"><span class="roi-row-label">Costo total</span><span class="roi-row-val" id="rcCostoM">—</span></div>
+          <div class="roi-row"><span class="roi-row-label">Detección IA</span><span class="roi-row-val">Manual / subjetiva</span></div>
+          <div class="roi-row"><span class="roi-row-label">Criterio uniforme</span><span class="roi-row-val">No garantizado</span></div>
+        </div>
+        <div class="roi-col auto">
+          <div class="roi-col-title">Con EduTrace — automático</div>
+          <div class="roi-row"><span class="roi-row-label">Minutos por ensayo</span><span class="roi-row-val">~2 min</span></div>
+          <div class="roi-row"><span class="roi-row-label">Total horas</span><span class="roi-row-val" id="rcHorasA">—</span></div>
+          <div class="roi-row"><span class="roi-row-label">Días laborales</span><span class="roi-row-val" id="rcDiasA">—</span></div>
+          <div class="roi-row"><span class="roi-row-label">Costo hora docente</span><span class="roi-row-val">$0 revisión</span></div>
+          <div class="roi-row"><span class="roi-row-label">Costo total</span><span class="roi-row-val" id="rcCostoA">—</span></div>
+          <div class="roi-row"><span class="roi-row-label">Detección IA</span><span class="roi-row-val">Automática + % prob.</span></div>
+          <div class="roi-row"><span class="roi-row-label">Criterio uniforme</span><span class="roi-row-val">Siempre garantizado</span></div>
+        </div>
+      </div>
+
+      <div class="roi-table-wrap">
+        <div class="roi-table-head">Comparativa completa · 40 min/estudiante · $25.000 COP/hora docente</div>
+        <table class="roi-table">
+          <thead>
+            <tr>
+              <th style="width:13%">Estudiantes</th>
+              <th style="width:15%" class="td-r">Horas manual</th>
+              <th style="width:13%" class="td-r">Días</th>
+              <th style="width:18%" class="td-r">Costo manual</th>
+              <th style="width:16%" class="td-r">Horas EduTrace</th>
+              <th style="width:13%" class="td-r">Ahorro</th>
+              <th style="width:12%" class="td-c">Eficiencia</th>
+            </tr>
+          </thead>
+          <tbody id="roiTabla"></tbody>
+        </table>
+      </div>
+
+      <div class="roi-chart-wrap">
+        <div class="roi-chart-title">Horas de revisión: manual vs EduTrace</div>
+        <div class="roi-legend">
+          <span class="roi-leg-item"><span class="roi-leg-dot" style="background:#f7694f"></span>Manual</span>
+          <span class="roi-leg-item"><span class="roi-leg-dot" style="background:#00d4aa"></span>EduTrace</span>
+        </div>
+        <div style="position:relative;width:100%;height:260px">
+          <canvas id="roiChart" role="img" aria-label="Gráfico comparando horas de revisión manual vs EduTrace para 150, 250, 350, 450 y 600 estudiantes">Manual supera ampliamente a EduTrace en todos los escenarios.</canvas>
+        </div>
+      </div>
+
+      <div class="roi-closing">
+        <div class="roi-closing-title">Lo que EduTrace le devuelve al docente</div>
+        <div class="roi-closing-grid">
+          <div class="roi-closing-item"><span class="roi-closing-icon">⏱</span><span>Tiempo real para planear clases, investigar y descansar</span></div>
+          <div class="roi-closing-item"><span class="roi-closing-icon">📊</span><span>Evaluación uniforme con la rúbrica CAC en cada ensayo</span></div>
+          <div class="roi-closing-item"><span class="roi-closing-icon">🤖</span><span>Detección objetiva de uso de IA sin sesgo personal</span></div>
+          <div class="roi-closing-item"><span class="roi-closing-icon">📋</span><span>Reporte listo para entregar a coordinación o padres</span></div>
+          <div class="roi-closing-item"><span class="roi-closing-icon">🏫</span><span>Escala de 1 docente a toda la institución sin esfuerzo extra</span></div>
+          <div class="roi-closing-item"><span class="roi-closing-icon">💡</span><span>Menos carga cognitiva, más decisiones informadas</span></div>
+        </div>
+      </div>
+
+    </div><!-- /view-roi -->
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- Modal reporte -->
+<div class="modal-overlay" id="modalOverlay" onclick="cerrarModal(event)">
+  <div class="modal" id="modalReporte">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modalTitle">Reporte de análisis</div>
+        <div class="modal-sub" id="modalSub"></div>
+      </div>
+      <button class="modal-close" onclick="cerrarModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+// ── Config Supabase ──────────────────────────────────────
+const SUPABASE_URL = 'TU_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'TU_SUPABASE_ANON_KEY';
+const API_URL = '/api';
+
+let entregasData = [];
+let tareaActualId = null;
+let realtimeChannel = null;
+
+// ── Auth ─────────────────────────────────────────────────
+function getToken() { return localStorage.getItem('et_token'); }
+function getUser()  { try { return JSON.parse(localStorage.getItem('et_user')); } catch { return null; } }
+
+function checkAuth() {
+  if (!getToken()) { window.location.href = 'login.html'; return false; }
+  const user = getUser();
+  if (user) {
+    const email = user.email || '';
+    const inicial = email[0]?.toUpperCase() || 'D';
+    document.getElementById('userAvatar').textContent = inicial;
+    document.getElementById('userName').textContent = email.split('@')[0];
+  }
+  return true;
+}
+
+function logout() {
+  localStorage.removeItem('et_token');
+  localStorage.removeItem('et_user');
+  window.location.href = 'login.html';
+}
+
+// ── Navegación — definida al final del script con soporte ROI ──
+
+// ── Cargar tareas ────────────────────────────────────────
+async function cargarTareas() {
+  const user = getUser();
+  if (!user) return;
+
+  try {
+    const res = await fetch(`${API_URL}/cursos/${user.id}`, {
+      headers: { 'Authorization': `Bearer ${getToken()}` }
+    });
+    const cursos = await res.json();
+
+    // Por ahora cargamos tareas del primer curso
+    if (cursos.length > 0) {
+      const resTareas = await fetch(`${API_URL}/tareas/${cursos[0].id}`, {
+        headers: { 'Authorization': `Bearer ${getToken()}` }
+      });
+      const tareas = await resTareas.json();
+      const select = document.getElementById('tareaSelect');
+      select.innerHTML = '<option value="">— Selecciona una tarea —</option>';
+      tareas.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = `${t.titulo} — ${t.fecha_entrega || 'Sin fecha'}`;
+        select.appendChild(opt);
+      });
+    }
+  } catch (e) {
+    console.error('Error cargando tareas:', e);
+  }
+}
+
+// ── Cargar entregas ──────────────────────────────────────
+async function cargarEntregas() {
+  const tareaId = document.getElementById('tareaSelect').value;
+  if (!tareaId) return;
+  tareaActualId = tareaId;
+
+  document.getElementById('tablaContainer').innerHTML =
+    '<div class="empty"><div class="spinner"></div><p style="margin-top:12px;color:var(--muted)">Cargando entregas...</p></div>';
+
+  try {
+    const [resEntregas, resResumen] = await Promise.all([
+      fetch(`${API_URL}/entregas/${tareaId}`, { headers: { 'Authorization': `Bearer ${getToken()}` } }),
+      fetch(`${API_URL}/resumen/${tareaId}`,  { headers: { 'Authorization': `Bearer ${getToken()}` } }),
+    ]);
+
+    entregasData = await resEntregas.json();
+    const resumen = await resResumen.json();
+
+    // Actualizar stats
+    document.getElementById('statTotal').textContent      = resumen.total_estudiantes ?? '—';
+    document.getElementById('statEntregados').textContent = resumen.entregados ?? '—';
+    document.getElementById('statPendientes').textContent = resumen.pendientes ?? '—';
+    document.getElementById('statIA').textContent         = resumen.posible_uso_ia ?? '—';
+    document.getElementById('statNombre').textContent     = resumen.nombre_incorrecto ?? '—';
+    document.getElementById('badgeEntregas').textContent  = resumen.pendientes ?? '—';
+
+    renderTabla(entregasData);
+    suscribirRealtime(tareaId);
+
+  } catch (e) {
+    console.error('Error cargando entregas:', e);
+    document.getElementById('tablaContainer').innerHTML =
+      '<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Error cargando datos</div><div class="empty-sub">Verifica la conexión con el servidor</div></div>';
+  }
+}
+
+// ── Render tabla ─────────────────────────────────────────
+function renderTabla(datos) {
+  if (!datos.length) {
+    document.getElementById('tablaContainer').innerHTML =
+      '<div class="empty"><div class="empty-icon">📭</div><div class="empty-title">Sin entregas aún</div><div class="empty-sub">Los estudiantes no han subido archivos a esta tarea</div></div>';
+    return;
+  }
+
+  const estadoBadge = {
+    entregado:        '<span class="badge badge-entregado">Entregado</span>',
+    pendiente:        '<span class="badge badge-pendiente">Pendiente</span>',
+    entregado_tarde:  '<span class="badge badge-tarde">Tarde</span>',
+    nombre_incorrecto:'<span class="badge badge-incorrecto">Nombre incorrecto</span>',
+  };
+
+  function iaTag(rep) {
+    if (!rep) return '<span class="ia-tag ia-nd">Sin análisis</span>';
+    const p = rep.ia_probabilidad ?? 0;
+    if (p >= 70) return `<span class="ia-tag ia-alto">🤖 ${p}%</span>`;
+    if (p >= 40) return `<span class="ia-tag ia-medio">⚠️ ${p}%</span>`;
+    return `<span class="ia-tag ia-bajo">✓ ${p}%</span>`;
+  }
+
+  function criterioTop(rep) {
+    if (!rep) return '—';
+    const vals = ['criterio_tesis','criterio_argumentacion','criterio_coherencia'];
+    const niveles = vals.map(k => rep[k]).filter(Boolean);
+    if (!niveles.length) return '—';
+    const top = niveles[0];
+    return `<span class="criterio-pill c-${top}">${top}</span>`;
+  }
+
+  const html = `
+    <table>
+      <thead>
+        <tr>
+          <th>Estudiante</th>
+          <th>Archivo</th>
+          <th>Estado</th>
+          <th>IA detectada</th>
+          <th>Criterio tesis</th>
+          <th>Fecha entrega</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${datos.map(e => `
+          <tr onclick="verReporte('${e.id}', '${(e.estudiantes?.nombre_completo || e.drive_owner_email || '').replace(/'/g,"\\'")}')">
+            <td>
+              <div class="student-name">${e.estudiantes?.nombre_completo || '—'}</div>
+              <div class="student-email">${e.drive_owner_email || ''}</div>
+            </td>
+            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--muted)" title="${e.drive_file_name || ''}">
+              ${e.drive_file_name || '—'}
+            </td>
+            <td>${estadoBadge[e.estado] || e.estado}</td>
+            <td>${iaTag(e.reportes)}</td>
+            <td>${criterioTop(e.reportes)}</td>
+            <td style="font-size:12px;color:var(--muted)">${e.fecha_subida ? new Date(e.fecha_subida).toLocaleDateString('es-CO') : '—'}</td>
+            <td><button class="btn-ver">Ver →</button></td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>`;
+
+  document.getElementById('tablaContainer').innerHTML = html;
+}
+
+// ── Ver reporte individual ────────────────────────────────
+async function verReporte(entregaId, nombreEstudiante) {
+  document.getElementById('modalTitle').textContent = `Análisis: ${nombreEstudiante}`;
+  document.getElementById('modalSub').textContent = 'Cargando reporte...';
+  document.getElementById('modalBody').innerHTML = '<div style="text-align:center;padding:40px"><div class="spinner"></div></div>';
+  document.getElementById('modalOverlay').classList.add('show');
+
+  try {
+    const res = await fetch(`${API_URL}/reporte/${entregaId}`, {
+      headers: { 'Authorization': `Bearer ${getToken()}` }
+    });
+
+    if (!res.ok) throw new Error('Sin reporte');
+    const r = await res.json();
+
+    document.getElementById('modalSub').textContent = `Analizado el ${r.generado_en ? new Date(r.generado_en).toLocaleString('es-CO') : '—'}`;
+
+    const iaAlto = (r.ia_probabilidad ?? 0) >= 70;
+    const criterios = [
+      { key: 'criterio_tesis',              label: 'Planteamiento de tesis' },
+      { key: 'criterio_argumentacion',      label: 'Argumentación conceptual' },
+      { key: 'criterio_contraargumentacion',label: 'Contraargumentación' },
+      { key: 'criterio_fuentes',            label: 'Uso de fuentes' },
+      { key: 'criterio_coherencia',         label: 'Coherencia y estructura' },
+      { key: 'criterio_pensamiento',        label: 'Pensamiento crítico' },
+    ];
+    const justs = r.justificacion_criterios || {};
+    const struct = [
+      { key: 'tiene_portada_apa',      label: 'Portada APA' },
+      { key: 'tiene_epigrafe',         label: 'Epígrafe' },
+      { key: 'tiene_cita_corta',       label: 'Cita corta' },
+      { key: 'tiene_cita_larga',       label: 'Cita larga' },
+      { key: 'tiene_contraargumentos', label: 'Contraargumentos' },
+      { key: 'tiene_conclusion',       label: 'Conclusión' },
+      { key: 'tiene_referencias_apa',  label: 'Referencias APA' },
+    ];
+
+    document.getElementById('modalBody').innerHTML = `
+
+      <!-- IA -->
+      <div class="report-section">
+        <div class="report-section-title">Detección de uso de IA</div>
+        <div class="ia-alert ${iaAlto ? 'alto' : 'bajo'}">
+          <div class="ia-alert-icon">${iaAlto ? '🤖' : '✅'}</div>
+          <div class="ia-alert-body">
+            <div class="ia-alert-title">
+              ${iaAlto ? `Posible uso de IA detectado — ${r.ia_probabilidad}% de probabilidad` : `Sin indicios significativos de IA — ${r.ia_probabilidad ?? 0}%`}
+            </div>
+            <div class="ia-alert-sub">
+              ${(r.ia_senales || []).join(' · ') || 'No se encontraron señales específicas.'}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Escala CAC -->
+      <div class="report-section">
+        <div class="report-section-title">Escala CAC</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;font-size:13px">
+            📝 <strong>${r.conteo_palabras ?? '—'}</strong> palabras
+            <span style="color:var(--muted);margin-left:6px">(esperado: ${r.escala_esperada_min ?? '?'}–${r.escala_esperada_max ?? '?'})</span>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;font-size:13px">
+            📄 <strong>${r.conteo_parrafos ?? '—'}</strong> párrafos
+          </div>
+          <div style="background:${r.cumple_escala_cac ? 'rgba(0,212,170,0.08)' : 'rgba(247,105,79,0.08)'};border:1px solid ${r.cumple_escala_cac ? 'rgba(0,212,170,0.2)' : 'rgba(247,105,79,0.2)'};border-radius:10px;padding:12px 16px;font-size:13px;color:${r.cumple_escala_cac ? 'var(--green)' : 'var(--warn)'}">
+            ${r.cumple_escala_cac ? '✓ Cumple escala' : '✗ No cumple escala'}
+          </div>
+        </div>
+      </div>
+
+      <!-- Criterios rúbrica -->
+      <div class="report-section">
+        <div class="report-section-title">Evaluación rúbrica CAC</div>
+        <div class="criteria-grid">
+          ${criterios.map(c => `
+            <div class="criterio-item">
+              <div class="criterio-name">${c.label}</div>
+              <div class="criterio-val">
+                <span class="criterio-pill c-${r[c.key] || 'bajo'}">${r[c.key] || '—'}</span>
+              </div>
+              <div class="criterio-just">${justs[c.key.replace('criterio_', '')] || ''}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- Estructura -->
+      <div class="report-section">
+        <div class="report-section-title">Verificación de estructura</div>
+        <div class="struct-grid">
+          ${struct.map(s => `
+            <div class="struct-item">
+              <span class="struct-check">${r[s.key] ? '✅' : '❌'}</span>
+              <span style="font-size:12px;color:${r[s.key] ? 'var(--text)' : 'var(--muted)'}">${s.label}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- Resumen docente -->
+      ${r.resumen_docente ? `
+      <div class="report-section">
+        <div class="report-section-title">Resumen para el docente</div>
+        <div class="resumen-box">${r.resumen_docente}</div>
+      </div>` : ''}
+
+      <!-- Recomendaciones -->
+      ${r.recomendaciones ? `
+      <div class="report-section">
+        <div class="report-section-title">Recomendaciones al estudiante</div>
+        <div class="recom-box">${r.recomendaciones}</div>
+      </div>` : ''}
+    `;
+
+  } catch (e) {
+    document.getElementById('modalBody').innerHTML =
+      '<div class="empty"><div class="empty-icon">📭</div><div class="empty-title">Sin análisis disponible</div><div class="empty-sub">Este archivo aún no ha sido procesado por el bot.</div></div>';
+  }
+}
+
+// ── Modal ────────────────────────────────────────────────
+function cerrarModal(event) {
+  if (!event || event.target === document.getElementById('modalOverlay')) {
+    document.getElementById('modalOverlay').classList.remove('show');
+  }
+}
+
+// ── Filtros ──────────────────────────────────────────────
+function filtrarTabla(query) {
+  const q = query.toLowerCase();
+  const filtrado = entregasData.filter(e =>
+    (e.estudiantes?.nombre_completo || '').toLowerCase().includes(q) ||
+    (e.drive_owner_email || '').toLowerCase().includes(q) ||
+    (e.drive_file_name || '').toLowerCase().includes(q)
+  );
+  renderTabla(filtrado);
+}
+
+function filtrarEstado(estado) {
+  const filtrado = estado ? entregasData.filter(e => e.estado === estado) : entregasData;
+  renderTabla(filtrado);
+}
+
+// ── Escaneo manual ───────────────────────────────────────
+async function escanearAhora() {
+  if (!tareaActualId) {
+    alert('Selecciona una tarea primero.');
+    return;
+  }
+  const btn = event.currentTarget;
+  btn.textContent = '⏳ Escaneando...';
+  btn.disabled = true;
+
+  try {
+    await fetch(`${API_URL}/escanear/${tareaActualId}`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${getToken()}` }
+    });
+    btn.textContent = '✓ Escaneo iniciado';
+    setTimeout(() => {
+      btn.textContent = '🔍 Escanear ahora';
+      btn.disabled = false;
+      cargarEntregas(); // Recargar después de 3 segundos
+    }, 3000);
+  } catch (e) {
+    btn.textContent = '🔍 Escanear ahora';
+    btn.disabled = false;
+  }
+}
+
+// ── Supabase Realtime ────────────────────────────────────
+function suscribirRealtime(tareaId) {
+  if (realtimeChannel) return; // ya suscrito
+
+  // Conexión Realtime de Supabase via WebSocket
+  const wsUrl = `${SUPABASE_URL.replace('https','wss')}/realtime/v1/websocket?apikey=${SUPABASE_ANON_KEY}&vsn=1.0.0`;
+  const ws = new WebSocket(wsUrl);
+
+  ws.onopen = () => {
+    ws.send(JSON.stringify({
+      topic: 'realtime:public:reportes',
+      event: 'phx_join',
+      payload: { config: { broadcast: { ack: false }, presence: { key: '' } } },
+      ref: '1'
+    }));
+  };
+
+  ws.onmessage = (msg) => {
+    const data = JSON.parse(msg.data);
+    if (data.event === 'INSERT' || data.event === 'UPDATE') {
+      // Nuevo reporte disponible — recargar tabla
+      setTimeout(() => cargarEntregas(), 500);
+    }
+  };
+
+  realtimeChannel = ws;
+}
+
+// ── Calculadora ROI ──────────────────────────────────────
+const ROI_ESCENARIOS = [150, 250, 350, 450, 600];
+const ROI_MIN_M = 40, ROI_MIN_A = 2;
+const ROI_COSTO_H = 25000, ROI_JORNADA = 8;
+let roiActual = 150;
+let roiChartInst = null;
+
+function roiCalc(n) {
+  const hM = (n * ROI_MIN_M) / 60;
+  const hA = (n * ROI_MIN_A) / 60;
+  return {
+    hM, hA,
+    diasM: hM / ROI_JORNADA,
+    diasA: hA / ROI_JORNADA,
+    costoM: hM * ROI_COSTO_H,
+    ahorro: hM - hA,
+    pct: Math.round(((hM - hA) / hM) * 100),
+  };
+}
+
+function roiFmtH(h) { return h >= 1 ? (Math.round(h * 10) / 10) + 'h' : Math.round(h * 60) + 'min'; }
+function roiFmtD(d) { return (Math.round(d * 10) / 10) + ' días'; }
+function roiFmtC(c) { return '$' + Math.round(c).toLocaleString('es-CO'); }
+
+function roiActualizar(n) {
+  const c = roiCalc(n);
+  document.getElementById('roiHeroHoras').textContent   = Math.round(c.hM);
+  document.getElementById('roiEstudiantes').textContent = n;
+  document.getElementById('roiHorasM').textContent      = Math.round(c.hM) + 'h';
+  document.getElementById('roiDias').textContent        = Math.round(c.diasM * 10) / 10;
+  document.getElementById('roiHorasA').textContent      = roiFmtH(c.hA);
+  document.getElementById('roiAhorro').textContent      = Math.round(c.ahorro) + 'h';
+  document.getElementById('rcHorasM').textContent       = roiFmtH(c.hM);
+  document.getElementById('rcDiasM').textContent        = roiFmtD(c.diasM);
+  document.getElementById('rcCostoM').textContent       = roiFmtC(c.costoM);
+  document.getElementById('rcHorasA').textContent       = roiFmtH(c.hA);
+  document.getElementById('rcDiasA').textContent        = roiFmtD(c.diasA);
+  document.getElementById('rcCostoA').textContent       = 'Incluido en plan';
+  roiRenderTabla(n);
+  roiRenderChart();
+}
+
+function roiRenderTabla(sel) {
+  document.getElementById('roiTabla').innerHTML = ROI_ESCENARIOS.map(n => {
+    const c = roiCalc(n);
+    return `<tr class="${n === sel ? 'roi-hl' : ''}">
+      <td><strong>${n}</strong></td>
+      <td class="td-r">${Math.round(c.hM)} h</td>
+      <td class="td-r">${Math.round(c.diasM * 10) / 10} días</td>
+      <td class="td-r" style="color:var(--warn)">${roiFmtC(c.costoM)}</td>
+      <td class="td-r">${roiFmtH(c.hA)}</td>
+      <td class="td-r" style="color:var(--green)">${Math.round(c.ahorro)} h</td>
+      <td class="td-c"><span class="saving-pill">${c.pct}% menos</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function roiRenderChart() {
+  const labels = ROI_ESCENARIOS.map(n => n + ' est.');
+  const dataM  = ROI_ESCENARIOS.map(n => Math.round(roiCalc(n).hM));
+  const dataA  = ROI_ESCENARIOS.map(n => Math.round(roiCalc(n).hA * 10) / 10);
+  if (roiChartInst) { roiChartInst.destroy(); }
+  roiChartInst = new Chart(document.getElementById('roiChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Manual', data: dataM, backgroundColor: 'rgba(247,105,79,0.5)', borderColor: '#f7694f', borderWidth: 1, borderRadius: 4 },
+        { label: 'EduTrace', data: dataA, backgroundColor: 'rgba(0,212,170,0.4)', borderColor: '#00d4aa', borderWidth: 1, borderRadius: 4 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y} horas` } }
+      },
+      scales: {
+        x: { ticks: { autoSkip: false, color: '#6b7594', font: { size: 12 } }, grid: { display: false } },
+        y: { ticks: { callback: v => v + 'h', color: '#6b7594', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.05)' }, beginAtZero: true }
+      }
+    }
+  });
+}
+
+function roiSet(n, btn) {
+  roiActual = n;
+  document.querySelectorAll('.roi-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  roiActualizar(n);
+}
+
+// Inicializar ROI cuando la vista se muestre por primera vez
+let roiInitialized = false;
+
+function showView(nombre) {
+  document.querySelectorAll('[id^="view-"]').forEach(v => v.style.display = 'none');
+  document.getElementById('view-' + nombre).style.display = 'block';
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  event?.currentTarget?.classList.add('active');
+  const titulos = {
+    dashboard:'Dashboard', entregas:'Entregas', estudiantes:'Estudiantes',
+    tareas:'Tareas', cursos:'Cursos', configuracion:'Configuración',
+    roi:'¿Por qué EduTrace?'
+  };
+  document.getElementById('topbarTitle').textContent = titulos[nombre] || nombre;
+  if (nombre === 'roi' && !roiInitialized) {
+    roiInitialized = true;
+    setTimeout(() => roiActualizar(150), 50);
+  }
+  if (nombre === 'cursos')      renderCursos();
+  if (nombre === 'estudiantes') { poblarSelectoresCurso(); cargarEstudiantesCurso(document.getElementById('filtroCursoEst')?.value || ''); }
+  if (nombre === 'tareas')      { poblarSelectoresCurso(); renderTareas(document.getElementById('filtroCursoTarea')?.value || ''); }
+}
+
+// ══════════════════════════════════════════════════════════
+// MÓDULO CURSOS
+// ══════════════════════════════════════════════════════════
+let cursosDB = JSON.parse(localStorage.getItem('et_cursos') || '[]');
+
+function mostrarFormCurso()  { document.getElementById('formCursoWrap').style.display='block'; }
+function ocultarFormCurso()  { document.getElementById('formCursoWrap').style.display='none'; limpiarMsg('msgCurso'); }
+
+function guardarCurso() {
+  const inst     = document.getElementById('cInst').value.trim();
+  const grado    = document.getElementById('cGrado').value;
+  const grupo    = document.getElementById('cGrupo').value.trim().toUpperCase();
+  const materia  = document.getElementById('cMateria').value.trim();
+  const driveUrl = document.getElementById('cDriveUrl').value.trim();
+  if (!inst || !grado || !grupo || !materia) { mostrarMsg('msgCurso','err','Completa todos los campos obligatorios.'); return; }
+  const id = 'curso_' + Date.now();
+  const curso = { id, inst, grado, grupo, materia, driveUrl, nombre:`${grado}°${grupo} — ${materia}`, creadoEn: new Date().toISOString() };
+  cursosDB.push(curso);
+  localStorage.setItem('et_cursos', JSON.stringify(cursosDB));
+  mostrarMsg('msgCurso','ok',`Curso ${grado}°${grupo} guardado correctamente.`);
+  setTimeout(() => { ocultarFormCurso(); renderCursos(); poblarSelectoresCurso(); }, 1200);
+}
+
+function renderCursos() {
+  const cont = document.getElementById('cardsCursos');
+  if (!cursosDB.length) {
+    cont.innerHTML = '<div class="empty"><div class="empty-icon">🏫</div><div class="empty-title">Sin cursos registrados</div><div class="empty-sub">Crea tu primer curso con el botón de arriba</div></div>';
+    return;
+  }
+  cont.innerHTML = cursosDB.map(c => `
+    <div class="curso-card">
+      <div class="curso-card-top">
+        <span class="curso-badge">${c.grado}°${c.grupo}</span>
+        <button class="btn-ver" onclick="eliminarCurso('${c.id}')">✕</button>
+      </div>
+      <div class="curso-card-nombre">${c.materia}</div>
+      <div class="curso-card-inst">${c.inst}</div>
+      <div class="curso-card-meta">
+        <span class="curso-meta-tag">Grado ${c.grado}</span>
+        <span class="curso-meta-tag">Grupo ${c.grupo}</span>
+        ${c.driveUrl ? `<span class="curso-meta-tag">📂 Drive vinculado</span>` : '<span class="curso-meta-tag" style="color:var(--warn)">Sin Drive</span>'}
+      </div>
+      <div class="curso-card-actions">
+        <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px" onclick="verTareasCurso('${c.id}')">Ver tareas</button>
+        <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px" onclick="verEstudiantesCurso('${c.id}')">Ver estudiantes</button>
+      </div>
+    </div>`).join('');
+}
+
+function eliminarCurso(id) {
+  if (!confirm('¿Eliminar este curso?')) return;
+  cursosDB = cursosDB.filter(c => c.id !== id);
+  localStorage.setItem('et_cursos', JSON.stringify(cursosDB));
+  renderCursos(); poblarSelectoresCurso();
+}
+
+function verTareasCurso(id)      { document.getElementById('filtroCursoTarea').value = id; showView('tareas'); }
+function verEstudiantesCurso(id) { document.getElementById('filtroCursoEst').value   = id; showView('estudiantes'); }
+
+function poblarSelectoresCurso() {
+  ['eCurso','tCurso','filtroCursoEst','filtroCursoTarea'].forEach(sid => {
+    const sel = document.getElementById(sid);
+    if (!sel) return;
+    const val  = sel.value;
+    const ph   = sid === 'filtroCursoTarea' ? '<option value="">Todos los cursos</option>' : '<option value="">— Selecciona un curso —</option>';
+    sel.innerHTML = ph + cursosDB.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+    if (val) sel.value = val;
+  });
+}
+
+// ══════════════════════════════════════════════════════════
+// MÓDULO ESTUDIANTES
+// ══════════════════════════════════════════════════════════
+let estudiantesDB  = JSON.parse(localStorage.getItem('et_estudiantes') || '{}');
+let estudiantesPrev = [];
+
+function mostrarFormEstudiante() { poblarSelectoresCurso(); document.getElementById('formEstudianteWrap').style.display='block'; }
+function ocultarFormEstudiante() {
+  document.getElementById('formEstudianteWrap').style.display='none';
+  document.getElementById('previewEstudiantes').style.display='none';
+  document.getElementById('btnImportar').style.display='none';
+  estudiantesPrev = []; limpiarMsg('msgEstudiante');
+}
+
+function previsualizarExcel(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb   = XLSX.read(data, { type:'array' });
+      const ws   = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+      let headerRow = -1;
+      for (let i = 0; i < Math.min(rows.length, 5); i++) {
+        if (rows[i].some(c => String(c).toLowerCase().includes('nombre'))) { headerRow = i; break; }
+      }
+      if (headerRow === -1) { mostrarMsg('msgEstudiante','err','No se encontró la columna "Nombre".'); return; }
+      const headers = rows[headerRow];
+      const iN  = headers.findIndex(h => String(h).toLowerCase().includes('nombre') && !String(h).toLowerCase().includes('mamá') && !String(h).toLowerCase().includes('papá'));
+      const iC  = headers.findIndex(h => String(h).toLowerCase().includes('correo') && String(h).toLowerCase().includes('institucional'));
+      const iCM = headers.findIndex(h => String(h).toLowerCase().includes('correo') && String(h).toLowerCase().includes('mamá'));
+      const iCP = headers.findIndex(h => String(h).toLowerCase().includes('correo') && String(h).toLowerCase().includes('papá'));
+      estudiantesPrev = [];
+      for (let i = headerRow+1; i < rows.length; i++) {
+        const r = rows[i];
+        if (!r[iN]) continue;
+        estudiantesPrev.push({ nombre:String(r[iN]||'').trim(), correo:String(r[iC]||'').trim().toLowerCase(), correoM:iCM>=0?String(r[iCM]||'').trim():'', correoP:iCP>=0?String(r[iCP]||'').trim():'' });
+      }
+      document.getElementById('previewCount').textContent = estudiantesPrev.length;
+      document.getElementById('tablaPreview').innerHTML = `
+        <thead><tr><th style="width:5%">#</th><th style="width:35%">Nombre</th><th style="width:35%">Correo institucional</th><th style="width:25%">Acudiente</th></tr></thead>
+        <tbody>${estudiantesPrev.map((e,i) => `<tr><td style="color:var(--muted)">${i+1}</td><td class="est-nombre">${e.nombre}</td><td style="font-size:12px;color:var(--muted)">${e.correo||'<span style="color:var(--warn)">Sin correo</span>'}</td><td style="font-size:11px;color:var(--muted)">${e.correoM||'—'}</td></tr>`).join('')}</tbody>`;
+      document.getElementById('previewEstudiantes').style.display='block';
+      document.getElementById('btnImportar').style.display='inline-flex';
+      limpiarMsg('msgEstudiante');
+    } catch(err) { mostrarMsg('msgEstudiante','err','Error leyendo el archivo. Verifica que sea .xlsx válido.'); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function importarEstudiantes() {
+  const cursoId = document.getElementById('eCurso').value;
+  if (!cursoId) { mostrarMsg('msgEstudiante','err','Selecciona el curso antes de importar.'); return; }
+  if (!estudiantesPrev.length) { mostrarMsg('msgEstudiante','err','No hay estudiantes en la vista previa.'); return; }
+  const curso = cursosDB.find(c => c.id === cursoId);
+  if (!estudiantesDB[cursoId]) estudiantesDB[cursoId] = [];
+  let nuevos = 0;
+  estudiantesPrev.forEach(e => {
+    if (!estudiantesDB[cursoId].find(x => x.correo === e.correo)) {
+      estudiantesDB[cursoId].push({ ...e, id:'est_'+Date.now()+Math.random(), cursoId }); nuevos++;
+    }
+  });
+  localStorage.setItem('et_estudiantes', JSON.stringify(estudiantesDB));
+  mostrarMsg('msgEstudiante','ok',`${nuevos} estudiantes importados en ${curso?.nombre||cursoId}.`);
+  setTimeout(() => { ocultarFormEstudiante(); cargarEstudiantesCurso(cursoId); }, 1500);
+}
+
+function cargarEstudiantesCurso(cursoId) {
+  const wrap = document.getElementById('wrapTablaEst');
+  if (!cursoId) { wrap.innerHTML='<div class="empty"><div class="empty-icon">👥</div><div class="empty-title">Selecciona un curso</div><div class="empty-sub">Elige un curso para ver su listado</div></div>'; return; }
+  const lista = estudiantesDB[cursoId] || [];
+  if (!lista.length) { wrap.innerHTML='<div class="empty"><div class="empty-icon">📭</div><div class="empty-title">Sin estudiantes</div><div class="empty-sub">Importa el listado con el botón de arriba</div></div>'; return; }
+  wrap.innerHTML = `
+    <div class="mod-preview-title">${lista.length} estudiantes registrados</div>
+    <table class="mod-table">
+      <thead><tr><th style="width:5%">#</th><th style="width:35%">Nombre</th><th style="width:35%">Correo institucional</th><th style="width:20%">Acudiente</th><th style="width:5%"></th></tr></thead>
+      <tbody>${lista.map((e,i) => `<tr><td style="color:var(--muted)">${i+1}</td><td class="est-nombre">${e.nombre}</td><td style="font-size:12px;color:var(--muted)">${e.correo||'—'}</td><td style="font-size:11px;color:var(--muted)">${e.correoM||'—'}</td><td><button class="btn-ver" onclick="eliminarEstudiante('${cursoId}','${e.id}')">✕</button></td></tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function eliminarEstudiante(cursoId, estId) {
+  estudiantesDB[cursoId] = (estudiantesDB[cursoId]||[]).filter(e => e.id !== estId);
+  localStorage.setItem('et_estudiantes', JSON.stringify(estudiantesDB));
+  cargarEstudiantesCurso(cursoId);
+}
+
+// ══════════════════════════════════════════════════════════
+// MÓDULO TAREAS
+// ══════════════════════════════════════════════════════════
+let tareasDB = JSON.parse(localStorage.getItem('et_tareas') || '[]');
+
+function mostrarFormTarea()  { poblarSelectoresCurso(); document.getElementById('formTareaWrap').style.display='block'; }
+function ocultarFormTarea()  { document.getElementById('formTareaWrap').style.display='none'; limpiarMsg('msgTarea'); }
+
+function guardarTarea() {
+  const cursoId  = document.getElementById('tCurso').value;
+  const tipo     = document.getElementById('tTipo').value;
+  const titulo   = document.getElementById('tTitulo').value.trim();
+  const fecha    = document.getElementById('tFecha').value;
+  const patron   = document.getElementById('tPatron').value.trim();
+  const driveUrl = document.getElementById('tDriveUrl').value.trim();
+  if (!cursoId || !titulo || !fecha) { mostrarMsg('msgTarea','err','Completa: curso, título y fecha de entrega.'); return; }
+  const curso = cursosDB.find(c => c.id === cursoId);
+  const tarea = { id:'tarea_'+Date.now(), cursoId, cursoNombre:curso?.nombre||'', tipo, titulo, fecha, patron, driveUrl, creadoEn:new Date().toISOString() };
+  tareasDB.push(tarea);
+  localStorage.setItem('et_tareas', JSON.stringify(tareasDB));
+  mostrarMsg('msgTarea','ok',`Tarea guardada correctamente.`);
+  setTimeout(() => { ocultarFormTarea(); renderTareas(cursoId); }, 1200);
+}
+
+function renderTareas(filtroCurso) {
+  const cont  = document.getElementById('listaTareas');
+  const lista = filtroCurso ? tareasDB.filter(t => t.cursoId === filtroCurso) : tareasDB;
+  if (!lista.length) { cont.innerHTML='<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">Sin tareas registradas</div><div class="empty-sub">Crea la primera tarea con el botón de arriba</div></div>'; return; }
+  const hoy = new Date().toISOString().split('T')[0];
+  const iconos = { ensayo:'📝', investigacion:'🔬', trabajo_escrito:'📄', otro:'📌' };
+  cont.innerHTML = lista.map(t => {
+    const vencida = t.fecha < hoy;
+    return `<div class="tarea-card">
+      <div class="tarea-icon">${iconos[t.tipo]||'📋'}</div>
+      <div class="tarea-info">
+        <div class="tarea-titulo" title="${t.titulo}">${t.titulo}</div>
+        <div class="tarea-meta">
+          <span>${t.cursoNombre}</span>
+          <span>${t.tipo.replace('_',' ')}</span>
+          <span class="tarea-fecha-tag ${vencida?'tarea-fecha-warn':'tarea-fecha-ok'}">${vencida?'⚠':'📅'} ${t.fecha}</span>
+          ${t.driveUrl?'<span style="color:var(--green)">📂 Drive vinculado</span>':'<span style="color:var(--warn)">Sin Drive</span>'}
+        </div>
+      </div>
+      <div class="tarea-actions">
+        <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px" onclick="verEntregasTarea('${t.id}','${t.titulo.replace(/'/g,"\\'")}','${t.fecha}')">Ver entregas</button>
+        <button class="btn-ver" onclick="eliminarTarea('${t.id}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function cargarTareasCurso(cursoId) { renderTareas(cursoId); }
+
+function eliminarTarea(id) {
+  if (!confirm('¿Eliminar esta tarea?')) return;
+  tareasDB = tareasDB.filter(t => t.id !== id);
+  localStorage.setItem('et_tareas', JSON.stringify(tareasDB));
+  renderTareas(document.getElementById('filtroCursoTarea')?.value||'');
+}
+
+function verEntregasTarea(tareaId, titulo, fecha) {
+  const sel = document.getElementById('tareaSelect');
+  if (sel) {
+    const existe = Array.from(sel.options).find(o => o.value === tareaId);
+    if (!existe) {
+      const opt = document.createElement('option');
+      opt.value = tareaId; opt.textContent = `${titulo} — ${fecha}`;
+      sel.appendChild(opt);
+    }
+    sel.value = tareaId;
+  }
+  showView('dashboard');
+}
+
+// ── Helpers ──────────────────────────────────────────────
+function mostrarMsg(id, tipo, texto) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = texto;
+  el.className = 'mod-msg ' + tipo;
+}
+function limpiarMsg(id) {
+  const el = document.getElementById(id);
+  if (el) { el.className='mod-msg'; el.textContent=''; }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (!checkAuth()) return;
+  cargarTareas();
+  poblarSelectoresCurso();
+});
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</body>
+</html>
