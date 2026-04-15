@@ -402,8 +402,8 @@ html, body {
 
 <script>
   // Supabase config — reemplazar con valores reales
-  const SUPABASE_URL = 'TU_SUPABASE_URL';
-  const SUPABASE_ANON_KEY = 'TU_SUPABASE_ANON_KEY';
+  const SUPABASE_URL = 'https://mvorycfihkztkqfwiwlo.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_0_pi2TkRLsRZSSE2T0Ddsg_R9lcO9j4';
 
   async function handleLogin() {
     const email = document.getElementById('email').value.trim();
@@ -427,6 +427,7 @@ html, body {
         headers: {
           'Content-Type': 'application/json',
           'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({ email, password }),
       });
@@ -434,13 +435,11 @@ html, body {
       const data = await res.json();
 
       if (data.access_token) {
-        // Guardar sesión
         localStorage.setItem('et_token', data.access_token);
         localStorage.setItem('et_user', JSON.stringify(data.user));
-        // Redirigir al dashboard
         window.location.href = 'dashboard.html';
       } else {
-        throw new Error('Credenciales inválidas');
+        throw new Error(data.error_description || 'Credenciales inválidas');
       }
     } catch (e) {
       errMsg.textContent = 'Correo o contraseña incorrectos. Verifica tus datos.';
