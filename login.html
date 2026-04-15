@@ -284,7 +284,17 @@ html, body {
 @media (max-width: 768px) {
   .layout { grid-template-columns: 1fr; }
   .brand-panel { display: none; }
-  .login-panel { padding: 32px 24px; background: transparent; }
+  .login-panel { 
+    padding: 24px 20px; 
+    background: transparent;
+    min-height: 100vh;
+    align-items: flex-start;
+    padding-top: 40px;
+  }
+  .login-card { max-width: 100%; }
+  .login-header h2 { font-size: 24px; }
+  .btn-login { padding: 14px; font-size: 14px; }
+  .field input { font-size: 16px; }
 }
 </style>
 </head>
